@@ -4,71 +4,161 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>太极处方 - 意动身随，气韵自生</title>
+  <title>太极处方 - 智能视频版</title>
   <style>
+    :root {
+      --tj-dark: #2c3e50;
+      --tj-light: #f4f1ea;
+      --tj-accent: #8e44ad;
+    }
+
     body {
-      background-color: #f4f1ea;
-      font-family: "PingFang SC", "Microsoft YaHei", serif;
+      background-color: var(--tj-light);
+      font-family: "PingFang SC", sans-serif;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      padding: 20px;
       margin: 0;
-      color: #333;
     }
 
     .container {
       background: #fff;
       padding: 2rem;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-      width: 90%;
-      max-width: 500px;
-      text-align: center;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
     }
 
     h1 {
-      color: #2c3e50;
-      font-weight: 300;
+      color: var(--tj-dark);
+      text-align: center;
+      margin-bottom: 5px;
     }
 
+    .subtitle {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    /* 输入区 */
     textarea {
       width: 100%;
       height: 100px;
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ddd;
-      border-radius: 8px;
-      margin: 1rem 0;
+      border-radius: 12px;
       box-sizing: border-box;
-      resize: none;
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+
+    /* 问卷区 */
+    #quizSection {
+      display: none;
+      border-top: 2px solid #eee;
+      padding-top: 20px;
+    }
+
+    .question {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .option-btn {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .option-btn.selected {
+      background: var(--tj-dark);
+      color: white;
+    }
+
+    /* 视频展示区 */
+    #videoContainer {
+      width: 100%;
+      margin-bottom: 15px;
+      display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    video {
+      width: 100%;
+      display: block;
+    }
+
+    /* 结果展示 */
+    #result {
+      padding: 1.5rem;
+      border-radius: 10px;
+      background: #f9f9f9;
+      line-height: 1.7;
+      display: none;
+      white-space: pre-wrap;
+      margin-bottom: 15px;
+    }
+
+    /* 按钮组 */
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
     }
 
     button {
-      background-color: #2c3e50;
+      background: var(--tj-dark);
       color: white;
       border: none;
-      padding: 10px 25px;
-      border-radius: 20px;
+      padding: 10px 24px;
+      border-radius: 25px;
       cursor: pointer;
-      transition: 0.3s;
+      font-size: 1rem;
     }
 
-    button:hover {
-      background-color: #456789;
+    button:disabled {
+      background: #ccc;
     }
 
-    #result {
-      margin-top: 2rem;
-      padding: 1rem;
-      border-top: 1px dashed #ccc;
-      line-height: 1.6;
-      display: none;
+    /* 历史记录 */
+    .history-section {
+      margin-top: 30px;
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+    }
+
+    .history-item {
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      background: #fff;
     }
 
     .loading {
       display: none;
-      color: #888;
-      margin-top: 10px;
+      text-align: center;
+      padding: 20px;
+      color: #666;
     }
   </style>
 </head>
@@ -77,14 +167,36 @@
 
   <div class="container">
     <h1>太极处方</h1>
-    <p style="font-size: 0.9rem; color: #666;">描述您的不适（如：颈椎酸痛、焦虑、失眠）</p>
+    <p class="subtitle">AI 辅助辩证 · 动态招式演示</p>
 
-    <textarea id="userInput" placeholder="例如：最近工作太累，感觉肩膀很僵硬..."></textarea>
-    <br>
-    <button onclick="getTaijiPrescription()">请方</button>
+    <div id="step1">
+      <textarea id="userInput" placeholder="请描述您的症状（如：颈椎僵硬、心烦易怒、失眠多梦...）"></textarea>
+      <div class="btn-group">
+        <button id="startBtn" onclick="generateQuiz()">开始辩证问卷</button>
+      </div>
+    </div>
 
-    <div id="loading" class="loading">正在为您调理气息...</div>
-    <div id="result"></div>
+    <div id="quizSection">
+      <div id="quizContainer"></div>
+      <div class="btn-group">
+        <button onclick="getFinalPrescription()">生成最终处方</button>
+      </div>
+    </div>
+
+    <div id="resultSection">
+      <div id="loading" class="loading">正在为您调理气息...</div>
+      <div id="videoContainer"></div>
+      <div id="result"></div>
+      <div class="btn-group" id="finalBtns" style="display:none">
+        <button onclick="exportToLocal()">导出处方</button>
+        <button onclick="location.reload()" style="background:#7f8c8d">重新开始</button>
+      </div>
+    </div>
+
+    <div class="history-section">
+      <p style="font-weight:bold; font-size:0.9rem; color:#888;">我的历史方剂</p>
+      <div id="historyList"></div>
+    </div>
   </div>
 
   <script src="app.js"></script>
